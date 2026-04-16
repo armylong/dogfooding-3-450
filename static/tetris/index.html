@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>俄罗斯方块 - Tetris</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="game-container">
+        <div class="game-header">
+            <h1>俄罗斯方块</h1>
+        </div>
+        
+        <div class="game-main">
+            <div class="game-info">
+                <div class="info-box">
+                    <h3>下一个</h3>
+                    <canvas id="next-canvas" width="120" height="120"></canvas>
+                </div>
+                <div class="info-box">
+                    <h3>分数</h3>
+                    <div class="score-display" id="score">0</div>
+                </div>
+                <div class="info-box">
+                    <h3>最高分</h3>
+                    <div class="score-display" id="high-score">0</div>
+                </div>
+                <div class="info-box">
+                    <h3>消除行数</h3>
+                    <div class="score-display" id="lines">0</div>
+                </div>
+                <div class="info-box">
+                    <h3>等级</h3>
+                    <div class="score-display" id="level">1</div>
+                </div>
+            </div>
+            
+            <div class="game-board">
+                <canvas id="game-canvas" width="300" height="600"></canvas>
+                <div class="game-overlay" id="game-overlay">
+                    <div class="overlay-content">
+                        <h2 id="overlay-title">游戏暂停</h2>
+                        <p id="overlay-message">按 P 键继续游戏</p>
+                        <button id="overlay-btn" class="btn">继续游戏</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="game-controls">
+                <div class="info-box">
+                    <h3>操作说明</h3>
+                    <div class="controls-list">
+                        <div class="control-item">
+                            <span class="key">←→</span>
+                            <span>左右移动</span>
+                        </div>
+                        <div class="control-item">
+                            <span class="key">↑</span>
+                            <span>旋转</span>
+                        </div>
+                        <div class="control-item">
+                            <span class="key">↓</span>
+                            <span>加速下落</span>
+                        </div>
+                        <div class="control-item">
+                            <span class="key">空格</span>
+                            <span>直接落地</span>
+                        </div>
+                        <div class="control-item">
+                            <span class="key">P</span>
+                            <span>暂停/继续</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="button-group">
+                    <button id="start-btn" class="btn btn-primary">开始游戏</button>
+                    <button id="pause-btn" class="btn">暂停</button>
+                    <button id="reset-btn" class="btn btn-secondary">重新开始</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="js/constants.js"></script>
+    <script src="js/tetromino.js"></script>
+    <script src="js/board.js"></script>
+    <script src="js/renderer.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

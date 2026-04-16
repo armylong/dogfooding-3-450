@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQLite Manager</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>SQLite Manager</h2>
+            </div>
+            <div class="sidebar-content">
+                <div class="sidebar-item overview-item active" data-type="overview">
+                    <span class="icon">📊</span>
+                    <span class="text">SQLite 概览</span>
+                </div>
+                <div class="sidebar-divider"></div>
+                <div class="tables-header">数据表</div>
+                <div class="tables-list" id="tablesList">
+                </div>
+            </div>
+        </aside>
+        <main class="main-content">
+            <div id="overviewPanel" class="panel active">
+                <h2>SQLite 数据库概览</h2>
+                <div class="overview-stats">
+                    <div class="stat-card">
+                        <div class="stat-icon">📁</div>
+                        <div class="stat-info">
+                            <div class="stat-label">数据库路径</div>
+                            <div class="stat-value" id="dbPath">-</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">💾</div>
+                        <div class="stat-info">
+                            <div class="stat-label">数据库大小</div>
+                            <div class="stat-value" id="dbSize">-</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📋</div>
+                        <div class="stat-info">
+                            <div class="stat-label">数据表数量</div>
+                            <div class="stat-value" id="tableCount">-</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="tables-overview">
+                    <h3>所有数据表</h3>
+                    <div class="tables-grid" id="tablesGrid">
+                    </div>
+                </div>
+            </div>
+            <div id="tablePanel" class="panel">
+                <div class="table-header">
+                    <h2 id="currentTableName">-</h2>
+                    <div class="table-info">
+                        <span id="tableRowCount">总条数: -</span>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table class="data-table" id="dataTable">
+                        <thead id="tableHead"></thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                </div>
+                <div class="pagination">
+                    <div class="pagination-info">
+                        共 <span id="totalRows">0</span> 条记录
+                    </div>
+                    <div class="pagination-controls">
+                        <button class="page-btn" id="prevPage">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="15 18 9 12 15 6"></polyline>
+                            </svg>
+                        </button>
+                        <div class="page-numbers" id="pageNumbers"></div>
+                        <button class="page-btn" id="nextPage">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="9 18 15 12 9 6"></polyline>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <div class="loading" id="loading">
+        <div class="loading-spinner"></div>
+    </div>
+    <script src="/static/common/auth.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>
