@@ -455,7 +455,7 @@ func printMonitorHelp() {
   --refresh              实时刷新显示
   --interval <seconds>   刷新间隔（秒），默认2秒
   --sort <field>         排序方式（cpu/memory/pid）
-  --limit <number>       显示数量限制，默认10条
+  --count <number>       显示数量限制，默认10条
 
 示例:
   monitor process list --sort cpu --limit 20

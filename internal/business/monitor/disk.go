@@ -44,6 +44,11 @@ func (b *diskBusiness) GetDiskUsage() ([]DiskInfo, error) {
 			continue
 		}
 
+		var usedPercent float64
+		if usage.Free > 0 {
+			usedPercent = float64(usage.Used) / float64(usage.Free) * 100
+		}
+
 		disks = append(disks, DiskInfo{
 			Device:      p.Device,
 			MountPoint:  p.Mountpoint,
@@ -51,7 +56,7 @@ func (b *diskBusiness) GetDiskUsage() ([]DiskInfo, error) {
 			Total:       usage.Total,
 			Used:        usage.Used,
 			Free:        usage.Free,
-			UsedPercent: usage.UsedPercent,
+			UsedPercent: usedPercent,
 		})
 	}
 
