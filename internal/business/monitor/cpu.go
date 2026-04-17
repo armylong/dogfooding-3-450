@@ -75,16 +75,19 @@ func (b *cpuBusiness) GetCPUInfo() (*CPUInfo, error) {
 
 // GetCPUUsage 获取CPU使用率
 func (b *cpuBusiness) GetCPUUsage() (*CPUUsage, error) {
-	// 获取总体CPU使用率
-	percentages, err := cpu.Percent(time.Second, false)
+	// 获取每个核心的使用率（包含总体）
+	perCorePercentages, err := cpu.Percent(time.Second, true)
 	if err != nil {
 		return nil, err
 	}
 
-	// 获取每个核心的使用率
-	perCorePercentages, err := cpu.Percent(time.Second, true)
-	if err != nil {
-		return nil, err
+	// 计算总体使用率
+	var totalUsage float64
+	if len(perCorePercentages) > 0 {
+		for _, p := range perCorePercentages {
+			totalUsage += p
+		}
+		totalUsage = totalUsage / float64(len(perCorePercentages))
 	}
 
 	// 获取详细的CPU时间统计
@@ -92,7 +95,7 @@ func (b *cpuBusiness) GetCPUUsage() (*CPUUsage, error) {
 	if err != nil || len(timesStat) == 0 {
 		// 如果获取详细统计失败，使用简单的百分比
 		usage := &CPUUsage{
-			TotalUsage:   percentages[0],
+			TotalUsage:   totalUsage,
 			PerCoreUsage: perCorePercentages,
 		}
 		return usage, nil
@@ -111,7 +114,7 @@ func (b *cpuBusiness) GetCPUUsage() (*CPUUsage, error) {
 		SoftIRQ:      stat.Softirq,
 		Steal:        stat.Steal,
 		Guest:        stat.Guest,
-		TotalUsage:   percentages[0],
+		TotalUsage:   totalUsage,
 		PerCoreUsage: perCorePercentages,
 	}
 
