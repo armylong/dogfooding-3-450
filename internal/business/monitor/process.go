@@ -40,10 +40,12 @@ func (b *processBusiness) GetProcessList(sortBy string, limit int) ([]ProcessInf
 		result = append(result, info)
 	}
 
+	// 先排序，再限制数量
+	result = b.sortProcesses(result, sortBy)
+
 	if limit > 0 && len(result) > limit {
 		result = result[:limit]
 	}
-	result = b.sortProcesses(result, sortBy)
 
 	return result, nil
 }
@@ -131,7 +133,7 @@ func (b *processBusiness) sortProcesses(processes []ProcessInfo, sortBy string) 
 	case "memory":
 		for i := 0; i < len(processes)-1; i++ {
 			for j := i + 1; j < len(processes); j++ {
-				if processes[j].Memory > processes[i].Memory {
+				if float64(processes[j].Memory) > float64(processes[i].Memory) {
 					processes[i], processes[j] = processes[j], processes[i]
 				}
 			}
@@ -225,6 +227,7 @@ func (b *processBusiness) FormatProcessOutput(processes []ProcessInfo) string {
 
 // formatTime 格式化时间戳
 func formatTime(timestamp int64) string {
-	t := time.Unix(timestamp, 0)
+	// gopsutil 返回的是毫秒时间戳，需要转换为秒
+	t := time.Unix(timestamp/1000, 0)
 	return t.Format("2006-01-02 15:04:05")
 }
