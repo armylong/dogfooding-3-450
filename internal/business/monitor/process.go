@@ -40,10 +40,11 @@ func (b *processBusiness) GetProcessList(sortBy string, limit int) ([]ProcessInf
 		result = append(result, info)
 	}
 
+	result = b.sortProcesses(result, sortBy)
+
 	if limit > 0 && len(result) > limit {
 		result = result[:limit]
 	}
-	result = b.sortProcesses(result, sortBy)
 
 	return result, nil
 }
@@ -225,6 +226,6 @@ func (b *processBusiness) FormatProcessOutput(processes []ProcessInfo) string {
 
 // formatTime 格式化时间戳
 func formatTime(timestamp int64) string {
-	t := time.Unix(timestamp, 0)
+	t := time.Unix(timestamp/1000, (timestamp%1000)*1000000)
 	return t.Format("2006-01-02 15:04:05")
 }
