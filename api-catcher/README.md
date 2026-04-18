@@ -12,6 +12,7 @@
 - ✅ **自动上传**：录制开启时，捕获的请求自动异步上传至服务器
 - ✅ **状态持久化**：录制状态和筛选条件自动保存
 - ✅ **异常处理**：服务器不可用时显示提示信息
+- ✅ **CSP兼容**：使用 Manifest V3 MAIN world 特性，绕过 CSP 限制
 
 ## 安装说明
 
@@ -55,7 +56,8 @@ api-catcher/
 ├── popup.css        # popup样式文件
 ├── popup.js         # popup交互逻辑
 ├── background.js    # 后台服务脚本（数据管理、上传）
-├── content.js       # 内容脚本（请求Hook）
+├── content.js       # 内容脚本（ISOLATED world，负责通信）
+├── injected.js      # 注入脚本（MAIN world，负责Hook）
 └── README.md        # 说明文档
 ```
 
@@ -63,20 +65,27 @@ api-catcher/
 
 ### manifest.json
 Chrome扩展的配置文件，包含：
-- 权限声明：storage、tabs、webNavigation
+- 权限声明：storage、tabs、webNavigation、scripting
 - 后台服务配置
-- 内容脚本注入配置
+- 内容脚本注入配置（两个脚本，不同 world）
 - host权限配置
 
-### content.js
-注入到页面的内容脚本，负责：
+### injected.js（MAIN world）
+注入到页面主线程的脚本，负责：
+- **直接访问页面上下文**：可以修改 `XMLHttpRequest` 和 `fetch`
 - Hook原生XMLHttpRequest对象
 - Hook原生fetch函数
-- 捕获请求的完整信息（URL、方法、头、参数、请求体、响应体、状态、耗时）
-- 与background通信，发送捕获的数据
+- 捕获请求的完整信息
+- 通过 `postMessage` 与 content script 通信
+
+### content.js（ISOLATED world）
+隔离环境的内容脚本，负责：
+- 与 background 通信，获取/同步录制状态
+- 作为 injected.js 和 background.js 之间的桥梁
+- 监听 injected.js 发送的捕获数据，转发给 background
 
 ### background.js
-后台服务，负责：
+后台服务（Manifest V3 Service Worker），负责：
 - 管理各标签页的接口数据（Map存储，标签页隔离）
 - 录制状态和筛选列表的持久化存储
 - 异步上传接口数据到服务器
@@ -129,17 +138,89 @@ popup面板的交互逻辑：
 | capture_time | Number | 捕获时间戳（毫秒） |
 | duration | Number | 请求耗时（毫秒） |
 
+## 技术实现要点
+
+### Manifest V3 MAIN World 特性
+
+本扩展使用 Manifest V3 的 `world: "MAIN"` 特性解决 CSP 限制问题：
+
+```json
+{
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["<all_urls>"],
+      "js": ["injected.js"],
+      "run_at": "document_start",
+      "world": "MAIN"
+    }
+  ]
+}
+```
+
+### 为什么需要两个脚本？
+
+| 特性 | ISOLATED world (content.js) | MAIN world (injected.js) |
+|------|----------------------------|-------------------------|
+| 访问 Chrome API | ✅ 可以 | ❌ 不可以 |
+| 访问页面 JS 上下文 | ❌ 不可以 | ✅ 可以 |
+| 受 CSP 限制 | ❌ 不受限制 | ✅ 受限制（但扩展文件例外） |
+| 修改 XHR/fetch | ❌ 不可以 | ✅ 可以 |
+
+### 通信机制
+
+```
+┌─────────────┐    postMessage    ┌─────────────┐
+│  Page JS    │ ←──────────────→ │ injected.js │
+│ (XHR/Fetch) │                   │ (MAIN world)│
+└─────────────┘                   └─────────────┘
+                                        │
+                                   postMessage
+                                        ↓
+                                 ┌─────────────┐
+                                 │ content.js  │
+                                 │(ISOLATED)   │
+                                 └─────────────┘
+                                        │
+                               chrome.runtime.sendMessage
+                                        ↓
+                                 ┌─────────────┐
+                                 │background.js│
+                                 │(Service Wkr)│
+                                 └─────────────┘
+                                        │
+                               chrome.runtime.sendMessage
+                                        ↓
+                                 ┌─────────────┐
+                                 │  popup.js   │
+                                 │ (弹出页面)   │
+                                 └─────────────┘
+```
+
+### 解决的问题
+
+1. **CSP 限制**：使用 `world: "MAIN"` 的脚本文件不受页面 CSP 限制
+2. **注入时机**：两个脚本都在 `document_start` 时注入，确保 Hook 在页面 JS 执行前完成
+3. **状态同步**：content.js 获取状态后通过 `postMessage` 同步给 injected.js
+
 ## 注意事项
 
 1. **图标文件**：manifest.json中配置了icon16.png、icon48.png、icon128.png，如需显示图标请自行添加对应尺寸的图标文件。
 2. **跨域问题**：由于Chrome的安全策略，content script只能在页面上下文执行Hook，无法通过chrome.webRequest API获取请求体和响应体。
 3. **服务器地址**：如需修改上传服务器地址，请修改background.js中的UPLOAD_URL常量。
 4. **刷新页面**：安装或更新扩展后，需要刷新已打开的页面才能生效。
+5. **变量命名**：injected.js中使用 `_apiCatcher*` 前缀命名私有变量，避免与页面JS变量冲突。
 
-## 技术实现
+## 技术栈
 
-- 使用Chrome Extension Manifest V3规范
-- Service Worker作为后台服务
-- 原型链改写实现XHR和Fetch的Hook
-- chrome.storage.local实现状态持久化
-- chrome.runtime.sendMessage实现跨上下文通信
+- Chrome Extension Manifest V3
+- Service Worker（后台服务）
+- MAIN World 注入（绕过 CSP）
+- 原型链改写（XHR/Fetch Hook）
+- chrome.storage.local（状态持久化）
+- chrome.runtime.sendMessage（跨上下文通信）
+- window.postMessage（页面与内容脚本通信）
