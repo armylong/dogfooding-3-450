@@ -63,7 +63,7 @@ api-catcher/
 
 ### manifest.json
 Chrome扩展的配置文件，包含：
-- 权限声明：storage、tabs、webNavigation
+- 权限声明：storage、tabs、activeTab
 - 后台服务配置
 - 内容脚本注入配置
 - host权限配置
@@ -72,8 +72,9 @@ Chrome扩展的配置文件，包含：
 注入到页面的内容脚本，负责：
 - Hook原生XMLHttpRequest对象
 - Hook原生fetch函数
-- 捕获请求的完整信息（URL、方法、头、参数、请求体、响应体、状态、耗时）
+- 捕获请求的完整信息（URL、方法、请求头、响应头、参数、请求体、响应体、状态、耗时）
 - 与background通信，发送捕获的数据
+- 使用页面上下文注入技术确保Hook能拦截所有请求
 
 ### background.js
 后台服务，负责：
@@ -82,6 +83,7 @@ Chrome扩展的配置文件，包含：
 - 异步上传接口数据到服务器
 - 服务器连接状态检测
 - 与popup和content脚本的消息通信
+- 监听标签页更新事件，向新页面同步状态
 
 ### popup.js
 popup面板的交互逻辑：
@@ -103,7 +105,8 @@ popup面板的交互逻辑：
     "id": "1712345678901_abc123",
     "url": "https://example.com/api/user/info",
     "method": "GET",
-    "headers": {},
+    "request_headers": {},
+    "response_headers": {},
     "params": {},
     "request_body": null,
     "response_body": {},
@@ -121,7 +124,8 @@ popup面板的交互逻辑：
 | id | String | 唯一标识（时间戳+随机数） |
 | url | String | 完整URL |
 | method | String | 请求方法 |
-| headers | Object | 请求头 |
+| request_headers | Object | 请求头 |
+| response_headers | Object | 响应头 |
 | params | Object | URL查询参数 |
 | request_body | 任意 | 请求体内容 |
 | response_body | 任意 | 响应体内容 |
@@ -135,11 +139,22 @@ popup面板的交互逻辑：
 2. **跨域问题**：由于Chrome的安全策略，content script只能在页面上下文执行Hook，无法通过chrome.webRequest API获取请求体和响应体。
 3. **服务器地址**：如需修改上传服务器地址，请修改background.js中的UPLOAD_URL常量。
 4. **刷新页面**：安装或更新扩展后，需要刷新已打开的页面才能生效。
+5. **调试信息**：打开浏览器开发者工具（F12），在Console中可以看到扩展的调试日志，前缀为`[API Catcher]`。
 
 ## 技术实现
 
 - 使用Chrome Extension Manifest V3规范
 - Service Worker作为后台服务
 - 原型链改写实现XHR和Fetch的Hook
+- 页面上下文脚本注入技术（解决隔离问题）
 - chrome.storage.local实现状态持久化
 - chrome.runtime.sendMessage实现跨上下文通信
+- 事件监听机制确保捕获所有请求状态（load/error/abort）
+
+## 更新日志
+
+### v1.0 (2024)
+- 初始版本发布
+- 支持XHR和Fetch请求捕获
+- 支持关键词筛选
+- 支持数据自动上传
