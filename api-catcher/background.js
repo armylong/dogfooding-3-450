@@ -2,8 +2,11 @@
   'use strict';
 
   const tabDataMap = new Map();
+
   let isRecording = false;
+
   let filterList = [];
+
   let serverConnected = true;
 
   const UPLOAD_URL = 'http://localhost/api_catcher/upload';

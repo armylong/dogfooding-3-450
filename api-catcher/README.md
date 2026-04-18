@@ -55,7 +55,8 @@ api-catcher/
 ├── popup.css        # popup样式文件
 ├── popup.js         # popup交互逻辑
 ├── background.js    # 后台服务脚本（数据管理、上传）
-├── content.js       # 内容脚本（请求Hook）
+├── content.js       # 内容脚本（注入器、消息转发）
+├── hook.js          # ✅ 独立的XHR/Fetch Hook脚本
 └── README.md        # 说明文档
 ```
 
@@ -136,6 +137,64 @@ popup面板的交互逻辑：
 3. **服务器地址**：如需修改上传服务器地址，请修改background.js中的UPLOAD_URL常量。
 4. **刷新页面**：安装或更新扩展后，需要刷新已打开的页面才能生效。
 
+## 🔧 问题诊断与修复
+
+### 问题现象
+扩展界面显示正常，但核心的接口捕获功能无法工作，无法捕获页面的XHR和Fetch请求。
+
+### 根本原因
+**Chrome Manifest V3 的严格内容安全策略(CSP) 阻止内联脚本执行**
+
+在原始代码中，`content.js` 使用以下方式注入钩子脚本：
+```javascript
+script.textContent = `...内联的大段代码...`;
+```
+
+这种创建**内联脚本**的方式在Manifest V3中会被浏览器的CSP策略完全阻止执行。这是Manifest V2升级到V3时最常见的兼容性问题之一。
+
+### 修复方案
+
+1. **分离钩子脚本**：创建独立的 `hook.js` 文件，将原来内联的XHR和Fetch钩子代码分离出去
+
+2. **修改脚本注入方式**：在 `content.js` 中使用 `chrome.runtime.getURL()` 获取扩展资源URL，通过 `src` 属性加载外部脚本：
+```javascript
+function injectHookScript() {
+  const script = document.createElement('script');
+  script.src = chrome.runtime.getURL('hook.js');  // ✅ 使用外部文件，符合CSP要求
+  // ...
+}
+```
+
+3. **添加资源访问配置**：在 `manifest.json` 中添加 `web_accessible_resources` 配置，允许页面访问扩展中的 `hook.js` 文件：
+```json
+"web_accessible_resources": [
+  {
+    "resources": ["hook.js"],
+    "matches": ["<all_urls>"]
+  }
+]
+```
+
+4. **显式声明CSP策略**：在manifest.json中明确设置内容安全策略：
+```json
+"content_security_policy": {
+  "extension_pages": "script-src 'self'; object-src 'self'"
+}
+```
+
+### 文件结构变更
+```
+api-catcher/
+├── manifest.json    # ✅ 添加web_accessible_resources和CSP配置
+├── popup.html       
+├── popup.css        
+├── popup.js         
+├── background.js    
+├── content.js       # ✅ 修改脚本注入方式
+├── hook.js          # ✅ 新增：分离的XHR/Fetch钩子脚本（原内联代码）
+└── README.md        
+```
+
 ## 技术实现
 
 - 使用Chrome Extension Manifest V3规范
@@ -143,3 +202,4 @@ popup面板的交互逻辑：
 - 原型链改写实现XHR和Fetch的Hook
 - chrome.storage.local实现状态持久化
 - chrome.runtime.sendMessage实现跨上下文通信
+- 独立脚本文件注入 + web_accessible_resources 规避CSP限制
