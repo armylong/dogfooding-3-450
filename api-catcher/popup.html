@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>抓接口</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>抓接口</h1>
+      <div class="status-badge stopped" id="statusBadge">
+        <span class="dot"></span>
+        <span id="statusText">已停止</span>
+      </div>
+    </div>
+
+    <div class="server-status connected" id="serverStatus">
+      ✓ 服务器连接正常
+    </div>
+
+    <div class="control-section">
+      <div class="control-row">
+        <span class="switch-label">录制开关</span>
+        <label class="switch">
+          <input type="checkbox" id="recordingSwitch">
+          <span class="slider"></span>
+        </label>
+      </div>
+    </div>
+
+    <div class="filter-section">
+      <div class="filter-header">
+        <h3>筛选关键词</h3>
+        <button class="add-filter-btn" id="addFilterBtn">+ 添加</button>
+      </div>
+      <div class="filter-list" id="filterList">
+      </div>
+    </div>
+
+    <div class="api-list-section">
+      <div class="api-list-header">
+        <div>
+          <h3>已捕获接口</h3>
+          <span class="api-count" id="apiCount">共 0 条</span>
+        </div>
+        <button class="clear-btn" id="clearBtn">清空</button>
+      </div>
+      <div class="api-list" id="apiList">
+        <div class="api-list-empty">暂无捕获的接口数据</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
